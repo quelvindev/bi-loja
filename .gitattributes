@@ -1,0 +1,2 @@
+arquivos_bi/compras.pbix filter=lfs diff=lfs merge=lfs -text
+arquivos_bi/vendas.pbix filter=lfs diff=lfs merge=lfs -text

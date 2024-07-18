@@ -1,0 +1,104 @@
+CREATE OR REPLACE VIEW VIEW_BI_LOJA_VENDA AS 
+SELECT 
+    PCDATAS.DATA,
+    NVL(FILIAL.COD_FILIAL,0) COD_FILIAL,
+    NVL(VENDAS.COD_SUPERVISOR,0) COD_SUPERVISOR,
+    NVL(VENDAS.NUM_TRANS_VENDA,0) NUM_TRANS_VENDA,
+    NVL(VENDAS.COD_CLI,0) COD_CLI,
+    NVL(VENDAS.VLR_VENDA,0) VLR_VENDA,
+    NVL(VENDAS.VLR_VENDA_TV1,0) VLR_VENDA_TV1,
+    NVL(VENDAS.VLR_VENDA_TV7,0) VLR_VENDA_TV7,
+    NVL(VENDAS.VLR_VENDA_BONIFICADA,0) VLR_VENDA_BONIFICADA,
+    NVL(VENDAS.VLR_VENDA_RI,0) VLR_VENDA_RI,
+    NVL(VENDAS.VLR_VENDA_RI,0)VLR_VENDA_RP,
+    NVL(VENDAS.VLR_VENDA_EN,0) VLR_VENDA_EN,
+    NVL(VENDAS.VLR_VENDA_EF,0) VLR_VENDA_EF ,
+    NVL(VENDAS.VLR_OUTRAS,0) VLR_OUTRAS,
+    NVL(VENDAS.VLR_FRETE,0)  VLR_FRETE,
+    NVL(VENDAS.VLR_LUCRO,0) VLR_LUCRO,
+    NVL(VENDAS.PER_LUCRO,0) PER_LUCRO,
+    NVL(VENDAS.VLR_DESCONTO,0) VLR_DESCONTO,
+    NVL(VENDAS.PER_DESCONTO,0) PER_DESCONTO
+    
+    
+
+FROM PCDATAS 
+    LEFT JOIN (
+                    SELECT 
+                        PCFILIAL.CODIGO COD_FILIAL,
+                        PCFILIAL.DTREGISTRO REGISTRO 
+                    FROM 
+                        PCFILIAL 
+                    WHERE PCFILIAL.CODIGO NOT IN (6,7,8)
+                )FILIAL 
+            ON PCDATAS.DATA > FILIAL.REGISTRO
+
+    LEFT JOIN (
+                    
+SELECT
+    M.DTMOV DATA,
+    M.CODFILIAL COD_FILIAL,
+    S.CODSUPERVISOR COD_SUPERVISOR,
+    M.NUMTRANSVENDA NUM_TRANS_VENDA,
+    M.CODCLI COD_CLI,
+    SUM(NVL(DECODE(S.CONDVENDA,NULL,0,5,0,8,0,(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0)))),0))VLR_VENDA,
+    SUM(NVL(DECODE(S.CONDVENDA,1,(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0),0))VLR_VENDA_TV1,
+    SUM(NVL(DECODE(S.CONDVENDA,7,(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0),0))VLR_VENDA_TV7,
+    SUM(NVL(DECODE(S.CONDVENDA,5,(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0),0))VLR_VENDA_BONIFICADA,
+    SUM(DECODE(C.TIPOENTREGA,'RI',(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0) )VLR_VENDA_RI,
+    SUM(DECODE(C.TIPOENTREGA,'RP',(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0) )VLR_VENDA_RP,
+    SUM(DECODE(C.TIPOENTREGA,'EN',(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0) )VLR_VENDA_EN,
+    SUM(DECODE(C.TIPOENTREGA,'EF',(NVL(M.QT,0)*(NVL(M.PUNIT,0)+NVL(M.VLOUTROS,0)+NVL(M.VLFRETE,0))),0) )VLR_VENDA_EF,
+    SUM( NVL(M.QT,0)* NVL(M.VLOUTROS,0) )VLR_OUTRAS,
+    SUM( NVL(M.QT,0)* NVL(M.VLFRETE,0) )VLR_FRETE,
+    SUM(ROUND((NVL(M.QT,0)*NVL(M.PUNIT,0))- NVL(M.QT,0)*(   CASE 
+                                                                WHEN NVL(M.CUSTOFIN,0) > 0 
+                                                                    THEN NVL(M.CUSTOFIN,0)
+                                                                 ELSE (NVL(M.CUSTOCONT,0)+NVL(M.VLIPI,0)+NVL(M.VLCOFINS,0)+NVL(M.VLPIS,0)+NVL(C.VLICMS,0)) 
+                                                                 END ) ,2)) VLR_LUCRO,
+    SUM(ROUND( CASE 
+                    WHEN NVL(M.QT,0)> 0 
+                        THEN ((NVL(M.QT,0)*NVL(M.PUNIT,0))- NVL(M.QT,0)* ( CASE 
+                                                                                WHEN NVL(M.CUSTOFIN,0) > 0 
+                                                                                    THEN NVL(M.CUSTOFIN,0)
+                                                                                WHEN (NVL(M.CUSTOCONT,0)+NVL(M.VLIPI,0)+NVL(M.VLCOFINS,0)+NVL(M.VLPIS,0)+NVL(C.VLICMS,0)) > 0
+                                                                                    THEN (NVL(M.CUSTOCONT,0)+NVL(M.VLIPI,0)+NVL(M.VLCOFINS,0)+NVL(M.VLPIS,0)+NVL(C.VLICMS,0)) 
+                                                                                ELSE 0 END ))/CASE 
+                                                                                                WHEN (NVL(M.QT,0)*NVL(M.PUNIT,0))>0 
+                                                                                                    THEN (NVL(M.QT,0)*NVL(M.PUNIT,0)) ELSE 1 END
+                    ELSE 0 END,8) ) PER_LUCRO,
+     SUM((NVL(M.QT,0)*NVL(M.PTABELA,0))- (NVL(M.QT,0)*NVL(M.PUNIT,0)))VLR_DESCONTO,
+     SUM(ROUND(NVL(M.PERCDESC,0) /100,8)) PER_DESCONTO
+
+    
+     
+FROM 
+    PCMOV M,PCMOVCOMPLE C , PCNFSAID S
+
+WHERE 
+    M.NUMTRANSITEM = C.NUMTRANSITEM
+    AND  M.NUMTRANSVENDA = S.NUMTRANSVENDA
+    AND S.CONDVENDA IN (1,7,5,9,11,14)
+    AND S.CODFILIALNF NOT IN(6,7)
+    AND S.DTCANCEL IS NULL
+    AND S.TIPOVENDA NOT IN( 'TR','SR')
+    AND M.DTCANCEL IS NULL
+    AND M.CODOPER = 'S'
+    AND M.DTMOV = S.DTSAIDA
+    AND M.CODUSUR = S.CODUSUR 
+GROUP BY
+    M.DTMOV, 
+    M.CODFILIAL,
+    S.CODSUPERVISOR,
+    M.NUMTRANSVENDA,
+    M.CODCLI ) VENDAS 
+            ON PCDATAS.DATA = VENDAS.DATA
+            AND FILIAL.COD_FILIAL = VENDAS.COD_FILIAL
+   
+                
+
+WHERE PCDATAS.DATA BETWEEN ADD_MONTHS( TRUNC(SYSDATE,'YY'),-24) AND ADD_MONTHS( LAST_DAY(TRUNC(SYSDATE)),0)
+
+ORDER BY DATA, COD_FILIAL
+ WITH READ ONLY    
+
