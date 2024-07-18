@@ -1,0 +1,5 @@
+VALIDA_ANO = IF(ora_dData[Ano]=year(TODAY()),"SIM","NÃO")
+VALIDA_ANO_ANTERIOR = IF(ora_dData[Ano]>=year(TODAY())-1,"SIM","NÃO")
+VALIDA_DIA = IF(ora_dData[Ano]=year(TODAY())&& ora_dData[Mês]=Month(TODAY())&& ora_dData[Dia]= DAY(TODAY()),"SIM","NÃO")
+VALIDA_MES = IF(ora_dData[Ano]=year(TODAY())&& ora_dData[Mês]=Month(TODAY()),"SIM","NÃO")
+VALIDA_SO_ANO_ANTERIOR = IF(ora_dData[Ano]=year(TODAY())-1,"SIM","NÃO")
